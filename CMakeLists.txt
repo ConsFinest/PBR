@@ -1,17 +1,24 @@
 cmake_minimum_required(VERSION 2.6)
-project(PBR)
+project(PBRdemo)
 
 include_directories(src contrib)
 
-add_library(PBRengine
-	src/PBRengine/shaderProgram.cpp
-	src/PBRengine/shaderProgram.h
+add_library(PBR
+	src/PBR/core.cpp
+	src/PBR/core.h
+	src/PBR/resources.cpp
+	src/PBR/resources.h
+	src/PBR/shader.cpp
+	src/PBR/shader.h
+	src/PBR/exception.cpp
+	src/PBR/exception.h
 )
 
-target_link_libraries(PBRengine SDL2 opengl32 glew32)
+target_link_libraries(PBR glew32 opengl32 OpenAl32 SDL2)
 
-add_executable(PBRdemo
-	src/PBRdemo/demo.cpp
+
+add_executable(Demo
+	src/Demo/demo.cpp
 )
 
-target_link_libraries(PBRdemo PBRengine)
+target_link_libraries(Demo PBR)
