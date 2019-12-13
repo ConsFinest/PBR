@@ -7,6 +7,6 @@
 int main()
 {
 	std::shared_ptr<Core> core = Core::init();
-	Shader shader("");
+	Shader shader("../shaders/shader.txt");
 	system("PAUSE");
 }

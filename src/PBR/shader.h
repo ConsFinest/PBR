@@ -6,13 +6,16 @@
 #include <vector>
 #include <iostream>
 
+#include "core.h"
+
 
 class Shader
 {
 	unsigned int ID;
 public:
-	Shader(const std::string& source);
+	Shader(const std::string& _source);
 	~Shader();
+	void parse(const std::string &_source);
 	void active();
 	void setInt(const std::string& _name, int _value);
 	void setFloat(const std::string &_name, float _value);

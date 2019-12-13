@@ -5,6 +5,8 @@
 #include <iostream>
 #include <memory>
 #include <exception>
+#include <fstream>
+
 #include "resources.h"
 #include "shader.h"
 

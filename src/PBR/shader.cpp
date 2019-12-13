@@ -1,7 +1,36 @@
 #include "shader.h"
 #include "exception.h"
 
-Shader::Shader(const std::string& source)
+Shader::Shader(const std::string& _source)
+{
+	std::fstream f(_source.c_str());
+
+	if (!f.is_open())
+	{
+		std::cout << _source << std::endl;
+		throw Exception("Failed to open shaderfile");
+	}
+
+	std::string obj;
+	std::string line;
+
+	while (!f.eof())
+	{
+		std::getline(f, line);
+		obj += line + "\n";
+	}
+
+	parse(obj);
+	
+}
+
+
+Shader::~Shader()
+{
+
+}
+
+void Shader::parse(const std::string & _source)
 {
 	GLuint vertId = 0;
 	GLuint fragId = 0;
@@ -11,7 +40,7 @@ Shader::Shader(const std::string& source)
 	std::string vertSrc = "";
 	vertSrc += "#version 120\n";
 	vertSrc += "#define VERTEX\n";
-	vertSrc += source;
+	vertSrc += _source;
 	src = vertSrc.c_str();
 
 	vertId = glCreateShader(GL_VERTEX_SHADER);
@@ -36,7 +65,7 @@ Shader::Shader(const std::string& source)
 	std::string fragSrc = "";
 	fragSrc += "#version 120\n";
 	fragSrc += "#define FRAGMENT\n";
-	fragSrc += source;
+	fragSrc += _source;
 	src = fragSrc.c_str();
 
 	fragId = glCreateShader(GL_FRAGMENT_SHADER);
@@ -75,7 +104,7 @@ Shader::Shader(const std::string& source)
 
 		std::vector<char> infoLog(length);
 		glGetProgramInfoLog(ID, length, NULL, &infoLog.at(0));
-	
+
 		std::string msg = &infoLog.at(0);
 		throw Exception(msg);
 	}
@@ -85,14 +114,8 @@ Shader::Shader(const std::string& source)
 	glDetachShader(ID, fragId);
 
 	glDeleteShader(vertId);
-	
+
 	glDeleteShader(fragId);
-	
-}
-
-
-Shader::~Shader()
-{
 }
 
 void Shader::active()
@@ -117,17 +140,17 @@ void Shader::setBool(const std::string & _name, bool _value)
 
 void Shader::setVec2(const std::string & _name, glm::vec2 _value)
 {
-	glUniform2fv(glGetUniformLocation(ID, _name.c_str()), _value);
+	glUniform2fv(glGetUniformLocation(ID, _name.c_str()), 1 , &_value[0]);
 }
 
 void Shader::setVec3(const std::string & _name, glm::vec3 _value)
 {
-	glUniform3fv(glGetUniformLocation(ID, _name.c_str()), _value);
+	glUniform3fv(glGetUniformLocation(ID, _name.c_str()), 1,  &_value[0]);
 }
 
 void Shader::setVec4(const std::string & _name, glm::vec4 _value)
 {
-	glUniform4fv(glGetUniformLocation(ID, _name.c_str()), _value);
+	glUniform4fv(glGetUniformLocation(ID, _name.c_str()), 1,  &_value[0]);
 
 }
 
