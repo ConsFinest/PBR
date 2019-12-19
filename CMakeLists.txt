@@ -22,7 +22,7 @@ add_library(PBR
 	src/PBR/3Dshapes.h
 )
 
-target_link_libraries(PBR glew32 opengl32 OpenAl32 SDL2)
+target_link_libraries(PBR glew32 opengl32 SDL2)
 
 
 add_executable(Demo
