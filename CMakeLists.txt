@@ -12,6 +12,14 @@ add_library(PBR
 	src/PBR/shader.h
 	src/PBR/exception.cpp
 	src/PBR/exception.h
+	src/PBR/texture.cpp
+	src/PBR/texture.h
+	src/PBR/camera.cpp
+	src/PBR/camera.h
+	src/PBR/renderTexture.cpp
+	src/PBR/renderTexture.h
+	src/PBR/3Dshapes.cpp
+	src/PBR/3Dshapes.h
 )
 
 target_link_libraries(PBR glew32 opengl32 OpenAl32 SDL2)

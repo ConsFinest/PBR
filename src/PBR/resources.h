@@ -4,6 +4,10 @@
 #include <GL/glew.h>
 #include <exception>
 
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 class Shader;
 
 class Resources

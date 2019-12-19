@@ -17,10 +17,12 @@ class Core
 {
 	SDL_Window *window;
 	std::shared_ptr <Resources> resources;
+	float lastTime;
 public:
 	std::weak_ptr<Core> self;
 	~Core();
 	static std::shared_ptr<Core> init();
+	SDL_Window* getWindow();
 	
 
 };

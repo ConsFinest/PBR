@@ -3,6 +3,7 @@
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 760
 
+
 Core::~Core()
 {
 	SDL_DestroyWindow(window);
@@ -26,4 +27,9 @@ std::shared_ptr<Core> Core::init()
 	}
 	core->resources = Resources::initializeOpenGL();
 	return core;
+}
+
+SDL_Window * Core::getWindow()
+{
+	return window;
 }
