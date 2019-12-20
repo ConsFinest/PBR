@@ -2,6 +2,22 @@
 #include "exception.h"
 
 
+Texture::Texture(glm::vec2 _viewport)
+{
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, _viewport.x, _viewport.y, 0, GL_RGB, GL_FLOAT, nullptr);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
 Texture::Texture(const std::string _text, bool _HDR)
 {
 	loadTexture(_text, _HDR);
@@ -81,6 +97,7 @@ void Texture::loadTexture(const std::string _text, bool _HDR)
 	}
 	if (_HDR)
 	{
+		stbi_set_flip_vertically_on_load(true);
 		float *data = stbi_loadf(_text.c_str(), &width, &height, &nrComponents, 0);
 		if (data)
 		{

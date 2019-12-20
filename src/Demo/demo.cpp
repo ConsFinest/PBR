@@ -27,11 +27,10 @@ int main()
 	glDepthFunc(GL_LEQUAL);
 	
 	Shader shader("../shaders/simpleShader.vs", "../shaders/simpleShader.fs");
-	Shader background("../shaders/backgroundShader.vs", "../shaders/backgroundShader.fs");
 	Shader PBR("../shaders/PBRshader.vs", "../shaders/PBRshader.fs");
 	Shader convert("../shaders/convertShader.vs", "../shaders/convertShader.fs");
 	Shader sky("../shaders/skyShader.vs", "../shaders/skyShader.fs");
-
+	Shader ir("../shaders/irShader.vs", "../shaders/irShader.fs");
 	sky.use();
 	sky.setInt("environmentMap", 0);
 
@@ -48,41 +47,9 @@ int main()
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
-	stbi_set_flip_vertically_on_load(true);
-	int width, height, nrComponents;
-	std::string path = "../samples/textures/skybox1.hdr";
-	float *data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
-	unsigned int hdrTexture;
-	if (data)
-	{
-		glGenTextures(1, &hdrTexture);
-		glBindTexture(GL_TEXTURE_2D, hdrTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_image_free(data);
-	}
-	else
-	{
-		std::cout << "Failed to load HDR image." << std::endl;
-	}
-
-	unsigned int envCubemap;
-	glGenTextures(1, &envCubemap);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-	for (unsigned int i = 0; i < 6; ++i)
-	{
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
-	}
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	Texture envCubemap({512,512});
+	Texture irCubeMap({ 32,32 });
 
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 	glm::mat4 captureViews[] =
@@ -99,106 +66,44 @@ int main()
 	convert.setInt("equirectangularMap", 0);
 	convert.setMat4("projection", captureProjection);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, hdrTexture);
+	glBindTexture(GL_TEXTURE_2D, skyBox.getID());
 
 	glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
 	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		convert.setMat4("view", captureViews[i]);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap.getID() , 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		cube.render();
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	float skyboxVertices[] = {
-		// positions          
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
+	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
 
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
-	};
-
-	unsigned int skyboxVAO, skyboxVBO;
-	glGenVertexArrays(1, &skyboxVAO);
-	glGenBuffers(1, &skyboxVBO);
-	glBindVertexArray(skyboxVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-
-	std::vector<std::string> skyboxTexts
+	ir.use();
+	ir.setInt("environmentMap", 0);
+	ir.setMat4("projection", captureProjection);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap.getID());
+	glViewport(0, 0, 32, 32);
+	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+	
+	for (unsigned int i = 0; i < 6; ++i)
 	{
-		"../samples/cubeMap/right.jpg",
-	    "../samples/cubeMap/left.jpg",
-	    "../samples/cubeMap/top.jpg",
-	    "../samples/cubeMap/bottom.jpg",
-	    "../samples/cubeMap/back.jpg",
-		 "../samples/cubeMap/front.jpg"
-	};
-	Texture skybox(skyboxTexts);
-	std::vector<std::string> irboxTexts
-	{
-		"../samples/cubeMap/rightIr.jpg",
-		"../samples/cubeMap/leftIr.jpg",
-		"../samples/cubeMap/topIr.jpg",
-		"../samples/cubeMap/bottomIr.jpg",
-		"../samples/cubeMap/backIr.jpg",
-		 "../samples/cubeMap/frontIr.jpg"
-	};
-	Texture irMap(irboxTexts);
+		ir.setMat4("view", captureViews[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irCubeMap.getID(), 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-	background.use();
-	background.setInt("skybox", 0);
-
-
+		cube.render();
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	
 
 	cap.resetViewPort();
-
-	background.use();
-	background.setInt("environmentMap", 0);
 
 	PBR.use();
 
@@ -219,7 +124,7 @@ int main()
 	sphere.addTexture(normal);
 	sphere.addTexture(metallic);
 	sphere.addTexture(ao);
-	sphere.addTexture(irMap);
+	sphere.addTexture(irCubeMap);
 	
 
 	glm::vec3 lightPositions[] = {
@@ -252,7 +157,7 @@ int main()
 		deltaTime = (double)((NOW - LAST) * 1000 / (double)SDL_GetPerformanceFrequency());
 		
 		//std::cout << deltaTime.delta << std::endl;
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		camera.movement(deltaTime);
@@ -293,34 +198,14 @@ int main()
 			}
 		}
 		glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-		/*background.use();
-		
-		background.setMat4("view", glm::mat4(glm::mat3(camera.GetProjMat())));
-		background.setMat4("projection", camera.GetProjMat());
-		
-		glBindVertexArray(skyboxVAO);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.getID());
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-		glDepthFunc(GL_LESS);*/
-
+	
 		sky.use();
 		sky.setMat4("view", camera.GetViewMat());
 		sky.setMat4("projection", camera.GetProjMat());
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyBox.getID());
 		cube.render();
-		/*model = glm::mat4(1.0f);
-		model = glm::translate(model, { 0,0,0 });
-		model = glm::scale(model, { 5,5,5 });
-		shader.use();
-		shader.setMat4("view", camera.GetViewMat());
-		shader.setMat4("projection", camera.GetProjMat());
-		shader.setMat4("model", model);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, skyBox.getID());
-		cube.render();*/
+		
 
 		SDL_GL_SwapWindow(core->getWindow());
 	}
