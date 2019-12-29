@@ -161,6 +161,7 @@ void Shape::render()
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
+		unbindTexture();
 	}
 }
 
@@ -183,6 +184,24 @@ void Shape::bindTexture()
 		{
 			glActiveTexture(GL_TEXTURE0 + i);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[i].getID());
+		}
+	}
+}
+
+void Shape::unbindTexture()
+{
+	int activeTexture = 0;
+	for (int i = 0; i != textures.size(); i++)
+	{
+		if (!textures[i].getCubeMap())
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+		else if (textures[i].getCubeMap())
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}
 	}
 }

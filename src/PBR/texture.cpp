@@ -2,8 +2,9 @@
 #include "exception.h"
 
 
-Texture::Texture(glm::vec2 _viewport)
+Texture::Texture(glm::vec2 _viewport, int _mipmaps)
 {
+	cubeMap = true;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 	for (unsigned int i = 0; i < 6; ++i)
@@ -13,8 +14,19 @@ Texture::Texture(glm::vec2 _viewport)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	if (_mipmaps == 0)
+	{
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+	if (_mipmaps == 1)
+	{
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	}
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if (_mipmaps == 1)
+	{
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	}
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 

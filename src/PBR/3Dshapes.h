@@ -26,6 +26,7 @@ public:
 	void render();
 	void addTexture(Texture _texture);
 	void bindTexture();
+	void unbindTexture();
 
 
 };

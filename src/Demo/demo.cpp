@@ -21,6 +21,7 @@ int main()
 	Camera camera;
 
 	Shape sphere(true);
+	Shape sphereNT(true);
 	Shape cube(false);
 	RenderTexture cap;
 	glEnable(GL_DEPTH_TEST);
@@ -28,9 +29,11 @@ int main()
 	
 	Shader shader("../shaders/simpleShader.vs", "../shaders/simpleShader.fs");
 	Shader PBR("../shaders/PBRshader.vs", "../shaders/PBRshader.fs");
+	Shader PBRNT("../shaders/PBRNTshader.vs", "../shaders/PBRNTshader.fs"); //PBR shader with no textures
 	Shader convert("../shaders/convertShader.vs", "../shaders/convertShader.fs");
 	Shader sky("../shaders/skyShader.vs", "../shaders/skyShader.fs");
 	Shader ir("../shaders/irShader.vs", "../shaders/irShader.fs");
+	Shader preFilter("../shaders/prefilterShader.vs", "../shaders/prefilterShader.fs");
 	sky.use();
 	sky.setInt("environmentMap", 0);
 
@@ -44,12 +47,13 @@ int main()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 1024, 1024);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
 	
-	Texture envCubemap({512,512});
-	Texture irCubeMap({ 32,32 });
+	Texture envCubeMap({1024,1024}, 0);
+	Texture irCubeMap({ 32,32 }, 0);
+	Texture preFilterCubeMap({ 128,128 }, 1);
 
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 	glm::mat4 captureViews[] =
@@ -68,12 +72,12 @@ int main()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, skyBox.getID());
 
-	glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+	glViewport(0, 0, 1024, 1024); // don't forget to configure the viewport to the capture dimensions.
 	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		convert.setMat4("view", captureViews[i]);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap.getID() , 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubeMap.getID() , 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		cube.render();
@@ -88,7 +92,7 @@ int main()
 	ir.setInt("environmentMap", 0);
 	ir.setMat4("projection", captureProjection);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap.getID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP, envCubeMap.getID());
 	glViewport(0, 0, 32, 32);
 	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 	
@@ -102,6 +106,36 @@ int main()
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	
+	preFilter.use();
+	preFilter.setInt("environmentMap", 0);
+	preFilter.setMat4("projection", captureProjection);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, envCubeMap.getID());
+
+	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+	unsigned int maxMipLevels = 5;
+	for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
+	{
+		// reisze framebuffer according to mip-level size.
+		unsigned int mipWidth = 128 * std::pow(0.5, mip);
+		unsigned int mipHeight = 128 * std::pow(0.5, mip);
+		glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+		glViewport(0, 0, mipWidth, mipHeight);
+
+		float roughness = (float)mip / (float)(maxMipLevels - 1);
+		preFilter.setFloat("roughness", roughness);
+		for (unsigned int i = 0; i < 6; ++i)
+		{
+			preFilter.setMat4("view", captureViews[i]);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, preFilterCubeMap.getID(), mip);
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			cube.render();
+		}
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
 	cap.resetViewPort();
 
@@ -113,6 +147,12 @@ int main()
 	PBR.setInt("roughnessMap", 3);
 	PBR.setInt("aoMap", 4);
 	PBR.setInt("irradianceMap", 5);
+
+	PBRNT.use();
+
+	PBRNT.setInt("irradianceMap", 0);
+	PBRNT.setVec3("albedo", { 0.0f, 0.5f,0.0f });
+	PBRNT.setFloat("ao", 1.0f);
 	
 	Texture albedo("../samples/textures/basecolor.png", false);
 	Texture normal("../samples/textures/normal.png", false);
@@ -125,19 +165,26 @@ int main()
 	sphere.addTexture(metallic);
 	sphere.addTexture(ao);
 	sphere.addTexture(irCubeMap);
+
+	sphereNT.addTexture(irCubeMap);
 	
+	cube.addTexture(envCubeMap);
 
 	glm::vec3 lightPositions[] = {
-	    glm::vec3(0.0f, 0.0f, 10.0f),
+	    glm::vec3(-10.0f, 10.0f, 10.0f),
+		  glm::vec3(10.0f,  10.0f, 10.0f),
+		glm::vec3(-10.0f, -10.0f, 10.0f),
+		glm::vec3(10.0f, -10.0f, 10.0f),
 	};
 	glm::vec3 lightColors[] = {
-		glm::vec3(150.0f, 150.0f, 150.0f),
+		glm::vec3(0.0f, 150.0f, 0.0f),
+	    glm::vec3(0.0f, 150.0f, 0.0f),
+		glm::vec3(0.0f, 150.0f, 0.0f),
+		glm::vec3 (0.0f, 150.0f, 0.0f)
 	};
 	int nrRows = 7;
 	int nrColumns = 7;
 	float spacing = 2.5;
-
-	//sphere.bindTexture();
 
 	bool playing = true;
 
@@ -151,7 +198,6 @@ int main()
 		
 
 		PBR.use();
-		sphere.bindTexture();
 		LAST = NOW;
 		NOW = SDL_GetPerformanceCounter();
 		deltaTime = (double)((NOW - LAST) * 1000 / (double)SDL_GetPerformanceFrequency());
@@ -167,19 +213,10 @@ int main()
 
 		std::cout << camera.GetPos().x << " " << camera.GetPos().y << " " << camera.GetPos().x << std::endl;
 
-		for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
-		{
-			glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(deltaTime * 5.0) * 5.0, 10.0, 0.0);
-			newPos = lightPositions[i];
-			PBR.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
-			PBR.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
 
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, newPos);
-			model = glm::scale(model, glm::vec3(0.5f));
-			PBR.setMat4("model", model);
-			//sphere.render(); makes BLACK sphere appear 
-		}
+		//-----------------------TEXTURED--------------------------//
+
+	   /* sphere.bindTexture();
 
 		for (int row = 0; row < nrRows; ++row)
 		{
@@ -191,19 +228,73 @@ int main()
 					(float)(row - (nrRows / 2)) * spacing,
 					0.0f
 				));
-				
+
 				PBR.setMat4("projection", camera.GetProjMat());
 				PBR.setMat4("model", model);
 				sphere.render();
 			}
+		}*/
+
+		//for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
+	//{
+	//	glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(deltaTime * 5.0) * 5.0, 10.0, 0.0);
+	//	newPos = lightPositions[i];
+	//	PBR.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+	//	PBR.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+
+	//	model = glm::mat4(1.0f);
+	//	model = glm::translate(model, newPos);
+	//	model = glm::scale(model, glm::vec3(0.5f));
+	//	PBR.setMat4("model", model);
+	//	//sphere.render(); //SHOWS LIGHT POSITIONS 
+	//}
+		//-----------------------NON_TEXTURED--------------------------//
+	
+	    PBRNT.use();
+
+		PBRNT.setVec3("camPos", camera.GetPos());
+		PBRNT.setMat4("view", glm::inverse(camera.GetViewMat()));
+		sphereNT.bindTexture();
+		for (int row = 0; row < nrRows; ++row)
+		{
+			PBRNT.setFloat("metallic", (float)row / (float)nrRows);
+			for (int col = 0; col < nrColumns; ++col)
+			{
+				PBRNT.setFloat("roughness", glm::clamp((float)col / (float)nrColumns, 0.05f, 1.0f));
+
+				model = glm::mat4(1.0f);
+				model = glm::translate(model, glm::vec3(
+					(float)(col - (nrColumns / 2)) * spacing,
+					(float)(row - (nrRows / 2)) * spacing,
+					-8.0f
+				));
+				PBRNT.setMat4("projection", camera.GetProjMat());
+				PBRNT.setMat4("model", model);
+				sphereNT.render();
+			}
 		}
+
+	
+		for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
+		{
+			glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(deltaTime * 5.0) * 5.0, 10.0, 0.0);
+			newPos = lightPositions[i];
+			PBRNT.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+			PBRNT.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+
+			model = glm::mat4(1.0f);
+			model = glm::translate(model, newPos);
+			model = glm::scale(model, glm::vec3(0.5f));
+			PBRNT.setMat4("model", model);
+			sphereNT.render(); //SHOWS LIGHT POSITIONS 
+		}
+
 		glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
 	
 		sky.use();
 		sky.setMat4("view", camera.GetViewMat());
 		sky.setMat4("projection", camera.GetProjMat());
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skyBox.getID());
+		cube.bindTexture();
 		cube.render();
 		
 
@@ -217,5 +308,4 @@ int main()
 }
 
 
-//TO DO : FrameBuffers
-//TO DO : CubeMaps
+//TO DO - no texture pbr
