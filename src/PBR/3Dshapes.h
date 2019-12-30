@@ -12,6 +12,7 @@ class Shape
 	unsigned int EBO;
 	unsigned int indexCount;
 	bool sphere;
+	bool quad;
 
 	std::vector<Texture> textures;
 	std::vector<glm::vec3> positions;
@@ -21,7 +22,7 @@ class Shape
 	std::vector<float> data;
 
 public:
-	Shape(bool _sphere);
+	Shape(bool _sphere, bool _quad);
 	~Shape();
 	void render();
 	void addTexture(Texture _texture);

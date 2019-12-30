@@ -1,10 +1,11 @@
 #include "3Dshapes.h"
 
-Shape::Shape(bool _sphere)
+Shape::Shape(bool _sphere, bool _quad)
 {
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	sphere = _sphere;
+	quad = _quad;
 	if (sphere)
 	{
 		glGenBuffers(1, &EBO);
@@ -78,7 +79,7 @@ Shape::~Shape()
 void Shape::render()
 {
 
-	if (sphere)
+	if (sphere && !quad)
 	{
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -95,8 +96,9 @@ void Shape::render()
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+		unbindTexture();
 	}
-	if (!sphere)
+	if (!sphere && !quad)
 	{
 		float vertices[] = {
 			// back face
@@ -162,6 +164,33 @@ void Shape::render()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 		unbindTexture();
+	}
+	if (!sphere && quad)
+	{
+	
+			
+		float quadVertices[] = {
+			// positions        // texture Coords
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+				1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+				1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+		// setup plane VAO
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+			
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
+		
 	}
 }
 

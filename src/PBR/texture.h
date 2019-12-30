@@ -15,7 +15,8 @@ class Texture
 	GLenum format;
 	bool cubeMap;
 public:
-	Texture(glm::vec2 _viewport, int _mipmaps); 
+	Texture(glm::vec2 _viewport); //empty
+	Texture(glm::vec2 _viewport, int _mipmaps); //empty
 	Texture(const std::string _text, bool _HDR);
 	Texture(const std::vector<std::string> _text); //empty
 	~Texture();

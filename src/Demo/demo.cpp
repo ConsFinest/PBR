@@ -17,15 +17,34 @@ int main()
 {
 
 
+	glm::vec3 lightPositions[] = {
+		glm::vec3(-10.0f, 10.0f, 10.0f),
+		  glm::vec3(10.0f,  10.0f, 10.0f),
+		glm::vec3(-10.0f, -10.0f, 10.0f),
+		glm::vec3(10.0f, -10.0f, 10.0f),
+	};
+	glm::vec3 lightColors[] = {
+		glm::vec3(300.0f, 300.0f, 300.0f),
+		glm::vec3(300.0f, 300.0f, 300.0f),
+		glm::vec3(300.0f, 300.0f, 300.0f),
+		glm::vec3(300.0f, 300.0f, 300.0f)
+	};
+	int nrRows = 7;
+	int nrColumns = 7;
+	float spacing = 2.5;
+
+
 	std::shared_ptr<Core> core = Core::init();
 	Camera camera;
 
-	Shape sphere(true);
-	Shape sphereNT(true);
-	Shape cube(false);
+	Shape sphere(true, false);
+	Shape sphereNT(true, false);
+	Shape cube(false, false);
+	Shape quad(false, true);
 	RenderTexture cap;
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	
 	Shader shader("../shaders/simpleShader.vs", "../shaders/simpleShader.fs");
 	Shader PBR("../shaders/PBRshader.vs", "../shaders/PBRshader.fs");
@@ -34,10 +53,12 @@ int main()
 	Shader sky("../shaders/skyShader.vs", "../shaders/skyShader.fs");
 	Shader ir("../shaders/irShader.vs", "../shaders/irShader.fs");
 	Shader preFilter("../shaders/prefilterShader.vs", "../shaders/prefilterShader.fs");
+	Shader brdf("../shaders/brdfShader.vs", "../shaders/brdfSahder.fs");
+
 	sky.use();
 	sky.setInt("environmentMap", 0);
 
-	Texture skyBox("../samples/textures/skybox1.hdr", true);
+	Texture skyBox("../samples/textures/Ref.hdr", true);
 
 
 	unsigned int captureFBO;
@@ -54,6 +75,7 @@ int main()
 	Texture envCubeMap({1024,1024}, 0);
 	Texture irCubeMap({ 32,32 }, 0);
 	Texture preFilterCubeMap({ 128,128 }, 1);
+	Texture brdfLUTTexture({512,512});
 
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 	glm::mat4 captureViews[] =
@@ -109,10 +131,11 @@ int main()
 	preFilter.use();
 	preFilter.setInt("environmentMap", 0);
 	preFilter.setMat4("projection", captureProjection);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, envCubeMap.getID());
-
 	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+
 	unsigned int maxMipLevels = 5;
 	for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
 	{
@@ -136,6 +159,22 @@ int main()
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	glActiveTexture(GL_TEXTURE0);
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture.getID(), 0);
+
+	glBindTexture(GL_TEXTURE_2D, brdfLUTTexture.getID());
+	glViewport(0, 0, 512, 512);
+	brdf.use();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	quad.render();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
 
 	cap.resetViewPort();
 
@@ -151,7 +190,9 @@ int main()
 	PBRNT.use();
 
 	PBRNT.setInt("irradianceMap", 0);
-	PBRNT.setVec3("albedo", { 0.0f, 0.5f,0.0f });
+	PBRNT.setInt("preFilterMap", 1);
+	PBRNT.setInt("brdfLUT", 2);
+	PBRNT.setVec3("albedo", { 0.5f, 0.0f,0.0f });
 	PBRNT.setFloat("ao", 1.0f);
 	
 	Texture albedo("../samples/textures/basecolor.png", false);
@@ -167,24 +208,11 @@ int main()
 	sphere.addTexture(irCubeMap);
 
 	sphereNT.addTexture(irCubeMap);
+	sphereNT.addTexture(preFilterCubeMap);
+	sphereNT.addTexture(brdfLUTTexture);
 	
 	cube.addTexture(envCubeMap);
 
-	glm::vec3 lightPositions[] = {
-	    glm::vec3(-10.0f, 10.0f, 10.0f),
-		  glm::vec3(10.0f,  10.0f, 10.0f),
-		glm::vec3(-10.0f, -10.0f, 10.0f),
-		glm::vec3(10.0f, -10.0f, 10.0f),
-	};
-	glm::vec3 lightColors[] = {
-		glm::vec3(0.0f, 150.0f, 0.0f),
-	    glm::vec3(0.0f, 150.0f, 0.0f),
-		glm::vec3(0.0f, 150.0f, 0.0f),
-		glm::vec3 (0.0f, 150.0f, 0.0f)
-	};
-	int nrRows = 7;
-	int nrColumns = 7;
-	float spacing = 2.5;
 
 	bool playing = true;
 
@@ -203,7 +231,7 @@ int main()
 		deltaTime = (double)((NOW - LAST) * 1000 / (double)SDL_GetPerformanceFrequency());
 		
 		//std::cout << deltaTime.delta << std::endl;
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		camera.movement(deltaTime);
@@ -254,6 +282,7 @@ int main()
 
 		PBRNT.setVec3("camPos", camera.GetPos());
 		PBRNT.setMat4("view", glm::inverse(camera.GetViewMat()));
+		PBRNT.setMat4("projection", camera.GetProjMat());
 		sphereNT.bindTexture();
 		for (int row = 0; row < nrRows; ++row)
 		{
@@ -268,7 +297,7 @@ int main()
 					(float)(row - (nrRows / 2)) * spacing,
 					-8.0f
 				));
-				PBRNT.setMat4("projection", camera.GetProjMat());
+			
 				PBRNT.setMat4("model", model);
 				sphereNT.render();
 			}
@@ -289,8 +318,6 @@ int main()
 			sphereNT.render(); //SHOWS LIGHT POSITIONS 
 		}
 
-		glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-	
 		sky.use();
 		sky.setMat4("view", camera.GetViewMat());
 		sky.setMat4("projection", camera.GetProjMat());
