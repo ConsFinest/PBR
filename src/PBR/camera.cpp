@@ -47,11 +47,12 @@ glm::mat4 Camera::GetProjMat()
 	return projection;
 }
 
-void Camera::movement(float _deltaTime)
+void Camera::movement(float _deltaTime, SDL_Window *_window)
 {
+
 	float velocity = MovementSpeed * _deltaTime;
 	SDL_Event event = { 0 };
-
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 	while (SDL_PollEvent(&event))
 	{
 		if (event.type == SDL_KEYDOWN)
@@ -74,14 +75,29 @@ void Camera::movement(float _deltaTime)
 				std::cout << "Going Right" << std::endl;
 				Position += Right * velocity;
 				break;
+			case SDLK_l:
+				std::cout << "Mouse locked" << std::endl;
+				SDL_ShowCursor(0);
+				SDL_SetWindowGrab(_window, SDL_TRUE);
+				SDL_WarpMouseInWindow(_window, (WINDOW_WIDTH / 2), (WINDOW_HEIGHT / 2));
+				break;
+			case SDLK_ESCAPE:
+				std::cout << "Unlocking Mouse" << std::endl;
+				SDL_ShowCursor(1);
+				SDL_SetWindowGrab(_window, SDL_FALSE);
+				break;
 			}
 		}
 		if (event.type == SDL_MOUSEMOTION)
 		{
-			int mouseX = event.motion.x;
-			int mouseY = event.motion.y;
+			//int mouseX = event.motion.x;
+			//int mouseY = event.motion.y;
+			//Yaw = mouseX * _deltaTime;
+			//Pitch = mouseY * _deltaTime;
 		}
+		updateCameraVectors();
 	}
+	
 
 }
 

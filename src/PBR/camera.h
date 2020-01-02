@@ -5,6 +5,7 @@
 #include "core.h"
 #include <vector>
 
+
 class Camera
 {
 	glm::vec3 Position;
@@ -28,7 +29,7 @@ public:
 	~Camera();
 	glm::mat4 GetViewMat();
 	glm::mat4 GetProjMat();
-	void movement(float _deltaTime);
+	void movement(float _deltaTime, SDL_Window *_window);
 	glm::vec3 GetPos();
 
 };

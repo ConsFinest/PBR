@@ -8,15 +8,17 @@ class RenderTexture
 {
 	unsigned int Fbo; //frameBufferObject
 	unsigned int Rbo; //renderBufferObject
-	unsigned int ID;
+	unsigned int ID; //textureID
 
 
 public:
 	RenderTexture();
 	~RenderTexture();
-	unsigned int GetFbo();
-	void setViewPort(glm::vec4 _view);
+	unsigned int GetFbo(glm::vec2 _storage);
+	void setViewPort(glm::vec2 _view);
 	void resetViewPort();
+	void setTexture(unsigned int _ID);
+	unsigned int getTexture();
 };
 
 #endif // !

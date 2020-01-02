@@ -15,11 +15,11 @@ RenderTexture::~RenderTexture()
 {
 }
 
-unsigned int RenderTexture::GetFbo()
+unsigned int RenderTexture::GetFbo(glm::vec2 _storage)
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, Fbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, Rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, _storage.x, _storage.y);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, Rbo);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -28,12 +28,22 @@ unsigned int RenderTexture::GetFbo()
 	return Fbo;
 }
 
-void RenderTexture::setViewPort(glm::vec4 _view)
+void RenderTexture::setViewPort(glm::vec2 _view)
 {
-	glViewport(0,0,_view.z, _view.w);
+	glViewport(0,0,_view.x, _view.y);
 }
 
 void RenderTexture::resetViewPort()
 {
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+}
+
+void RenderTexture::setTexture(unsigned int _ID)
+{
+	ID = _ID;
+}
+
+unsigned int RenderTexture::getTexture()
+{
+	return ID;
 }

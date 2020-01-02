@@ -96,7 +96,7 @@ void Shape::render()
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
-		unbindTexture();
+		//unbindTexture();
 	}
 	if (!sphere && !quad)
 	{
@@ -163,7 +163,7 @@ void Shape::render()
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
-		unbindTexture();
+		//unbindTexture();
 	}
 	if (!sphere && quad)
 	{
@@ -190,7 +190,7 @@ void Shape::render()
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glBindVertexArray(0);
-		
+		//unbindTexture();
 	}
 }
 
