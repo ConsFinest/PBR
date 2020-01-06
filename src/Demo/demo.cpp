@@ -297,8 +297,8 @@ int main()
 					PBR.setMat4("projection", proj);
 					PBR.setMat4("model", model);
 
-					sphereSF.bindTexture();
-					sphereSF.render();
+					sphere.bindTexture();
+					sphere.render();
 				}
 			}
 			for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
@@ -313,7 +313,7 @@ int main()
 				PBR.setMat4("model", model);
 				
 				
-				sphereSF.render(); //SHOWS LIGHT POSITIONS 
+				sphere.render(); //SHOWS LIGHT POSITIONS 
 			}
 		}
 		if (!textured)
