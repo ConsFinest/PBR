@@ -4,19 +4,16 @@
 
 void Camera::updateCameraVectors()
 {
-	glm::mat4 t(1.0f);
-	t = glm::translate(t, glm::vec3(0, 1, 0));
-	Up = t * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	Up = glm::normalize(Up);
+	
 
-	t = glm::mat4(1.0f);
-	t = glm::rotate(t, glm::radians(angleX), glm::vec3(0, 1, 0));
+	glm::mat4 t(1.0f);
+	t = glm::rotate(t, glm::radians(Rotation.x), glm::vec3(0, 1, 0));
 	t = glm::translate(t, glm::vec3(0, 0, -1));
 	Front = t * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	Front = glm::normalize(Front);
 
 	t = glm::mat4(1.0f);
-	t = glm::rotate(t, glm::radians(angleX), glm::vec3(0, 1, 0));
+	t = glm::rotate(t, glm::radians(Rotation.x), glm::vec3(0, 1, 0));
 	t = glm::translate(t, glm::vec3(1, 0, 0));
 	Right = t * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	Right = glm::normalize(Right);
@@ -25,14 +22,19 @@ void Camera::updateCameraVectors()
 
 Camera::Camera()
 {
+	glm::mat4 t(1.0f);
+	t = glm::translate(t, glm::vec3(0, 1, 0));
+	Up = t * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	Up = glm::normalize(Up);
+
 	Rotation = { 0,0,0 };
 	Position = { 0,0,0 };
 
-	MovementSpeed = 0.10f;
-	lastX = WINDOW_WIDTH / 2;
-	lastY = WINDOW_HEIGHT / 2;
-	angleX = 0;
-	angleY = 0;
+	firstMouse = true;
+	mouseLock = true;
+	quit = false;
+
+	MovementSpeed = 10.00f;
 	updateCameraVectors();
 }
 
@@ -45,8 +47,8 @@ glm::mat4 Camera::GetViewMat()
 {
 	glm::mat4 Model(glm::mat4(1.0f));
 	Model = glm::translate(Model, Position);
-	Model = glm::rotate(Model, glm::radians(angleX), glm::vec3(0, 1, 0));
-	Model = glm::rotate(Model, glm::radians(angleY), glm::vec3(1, 0, 0));
+	Model = glm::rotate(Model, glm::radians(Rotation.x), glm::vec3(0, 1, 0));
+	Model = glm::rotate(Model, glm::radians(Rotation.y), glm::vec3(1, 0, 0));
 	Model = glm::rotate(Model, glm::radians(Rotation.z), glm::vec3(0, 0, 1));
 	Model = glm::scale(Model, { 1,1,1 });
 	return Model;
@@ -88,47 +90,48 @@ void Camera::movement(float _deltaTime, SDL_Window *_window)
 				//std::cout << "Going Right" << std::endl;
 				Position += Right * velocity;
 				break;
+			case SDLK_SPACE:
+				Position += Up * velocity;
+				break;
+			case SDLK_LSHIFT:
+				Position -= Up * velocity;
+				break;
 			case SDLK_l:
-				std::cout << "Mouse locked" << std::endl;
-				SDL_ShowCursor(0);
-				SDL_SetWindowGrab(_window, SDL_TRUE);
-				SDL_WarpMouseInWindow(_window, (WINDOW_WIDTH / 2), (WINDOW_HEIGHT / 2));
+				if (!mouseLock)
+				{
+					std::cout << "Mouse locked" << std::endl;
+					mouseLock = true;
+				}
+				if (mouseLock)
+				{
+					std::cout << "Mouse unlocked" << std::endl;
+					mouseLock = false;
+				}
 				break;
 			case SDLK_ESCAPE:
-				std::cout << "Unlocking Mouse" << std::endl;
-				SDL_ShowCursor(1);
-				SDL_SetWindowGrab(_window, SDL_FALSE);
+				quit = true;
 				break;
 			}
 		}
 		if (event.type == SDL_MOUSEMOTION)
 		{
-			float rotspeed = 1.0f;
-			const Uint32 mouse = SDL_GetMouseState(&mouseX, &mouseY);
-			
-			if (mouseX > (WINDOW_WIDTH / 2))
+			updateCameraVectors();
+			if (!firstMouse)
 			{
-				angleX -= rotspeed;
+				mouseX = event.motion.xrel;
+				mouseY = event.motion.yrel;
+				std::cout << mouseX << " " << mouseY << std::endl;
 			}
-			if (mouseX < (WINDOW_WIDTH / 2))
+			else
 			{
-				angleX += rotspeed;
-
+				firstMouse = false;
+				mouseX = 0;
+				mouseY = 0;
 			}
-			if (mouseY > (WINDOW_HEIGHT / 2))
-			{
-				angleY -= rotspeed * 0.8f;
-
-			}
-			if (mouseY < (WINDOW_HEIGHT / 2))
-			{
-				angleY += rotspeed * 0.8f;
-			}
-			
-			
+			Rotation.x -= mouseX * _deltaTime;
+			Rotation.y -= mouseY * _deltaTime;
 		}
-		updateCameraVectors();
-		GetViewMat();
+		
 	}
 	
 
@@ -137,6 +140,16 @@ void Camera::movement(float _deltaTime, SDL_Window *_window)
 glm::vec3 Camera::GetPos()
 {
 	return Position;
+}
+
+bool Camera::getMouseLock()
+{
+	return mouseLock;
+}
+
+bool Camera::getQuit()
+{
+	return quit;
 }
 
 

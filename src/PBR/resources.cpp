@@ -12,4 +12,5 @@ std::shared_ptr<Resources> Resources::initializeOpenGL()
 
 Resources::~Resources()
 {
+	
 }

@@ -22,11 +22,10 @@ class Camera
 
 	int mouseX;
 	int mouseY;
-	float angleX;
-	float angleY;
-	float lastX;
-	float lastY;
+	
 	bool firstMouse;
+	bool mouseLock;
+	bool quit;
 
 	void updateCameraVectors();
 
@@ -37,6 +36,8 @@ public:
 	glm::mat4 GetProjMat();
 	void movement(float _deltaTime, SDL_Window *_window);
 	glm::vec3 GetPos();
+	bool getMouseLock();
+	bool getQuit();
 
 };
 

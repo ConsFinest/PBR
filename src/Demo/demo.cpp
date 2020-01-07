@@ -372,25 +372,31 @@ int main()
 		glm::vec3(300.0f, 300.0f, 300.0f)
 	};
 	bool playing = true;
-	bool cursorLock = true;
-	Uint64 NOW = SDL_GetPerformanceCounter();
-	Uint64 LAST = 0;
-	double deltaTime = 0;
-	SDL_ShowCursor(0);
-	SDL_SetWindowGrab(core->getWindow(), SDL_TRUE);
-	SDL_WarpMouseInWindow(core->getWindow(), (WINDOW_WIDTH / 2), (WINDOW_HEIGHT / 2));
-
+	
+	float timeT;
+	float lastTime = SDL_GetTicks();
+	
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	while (playing)
 	{
+	
 		glm::mat4 proj = camera.GetProjMat();
 		glm::mat4 view = camera.GetViewMat();
 		glm::vec3 pos = camera.GetPos();
-		LAST = NOW;
-		NOW = SDL_GetPerformanceCounter();
-		deltaTime = (double)((NOW - LAST) * 1000 / (double)SDL_GetPerformanceFrequency());
+		//DELTATIME
+
+		timeT = SDL_GetTicks();
+		float diff = timeT - lastTime;
+		float deltaTime = diff / 1000.0f;
+		lastTime = timeT;
+		float idealTime = 1.0f / 60.0f;
+		if (idealTime > deltaTime)
+		{
+			SDL_Delay((idealTime - deltaTime)*1000.0f);
+		}
 		
-		//std::cout << deltaTime.delta << std::endl;
+		//std::cout << deltaTime << std::endl;
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
@@ -485,18 +491,32 @@ int main()
 
 		glDepthFunc(GL_LEQUAL);
 		sky.use();
-		sky.setMat4("view", (view));
+		sky.setMat4("view", glm::inverse(view));
 		sky.setMat4("projection", proj);
 		cube.bindTexture();
 		cube.render();
+
+		if (camera.getMouseLock())
+		{
+			SDL_ShowCursor(0);
+			SDL_SetWindowGrab(core->getWindow(), SDL_TRUE);
+			SDL_WarpMouseInWindow(core->getWindow(), (WINDOW_WIDTH / 2), (WINDOW_HEIGHT / 2));
+		}
+		if (!camera.getMouseLock())
+		{
+			SDL_ShowCursor(1);
+			SDL_SetWindowGrab(core->getWindow(), SDL_FALSE);
+		}
+		if (camera.getQuit())
+		{
+			playing = false;
+		}
 		
 		camera.movement(deltaTime, core->getWindow());
 		SDL_GL_SwapWindow(core->getWindow());
-		
 	}
 	
 	
-	//glDeleteBuffers(1, &EBO);
 	
 
 }

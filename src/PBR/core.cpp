@@ -6,6 +6,7 @@
 
 Core::~Core()
 {
+	SDL_GL_DeleteContext(window);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 }
