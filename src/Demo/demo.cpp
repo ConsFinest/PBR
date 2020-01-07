@@ -15,38 +15,86 @@
 
 int main()
 {
-	int choice;
-	bool choosing = false;
+	int choice = true;
+	bool choosing1 = false;
+	bool choosing2 = false;
 	bool textured;
 
-	std::cout << "Press 1 = textured, Press 2 = untextured :";
-	std::cin >> choice;
+	int nrRows = 1;
+	int nrColumns = 1;
+	float spacing = 2.5;
+	int textureChoice = 1;
+	int backGroundChoice = 1;
 
-	while (!choosing)
+	while (!choosing1)
 	{
+		
+		std::cout << "Press 1 = textured, Press 2 = untextured :";
+		std::cin >> choice;
 		switch (choice)
 		{
 		case 1:
 			textured = true;
-			choosing = true;
+			choosing1 = true;
 			break;
 		case 2:
 			textured = false;
-			choosing = true;
+			choosing1 = true;
 			break;
 		default:
+			system("CLS");
 			break;
 		}
 	}
+	choice = false;
+	if (!textured)
+	{
+		system("CLS");
+		std::cout << "Choose Dimensions of grid (x/y) between 1 - 10" << std::endl;
+		int x = 0;
+		int y = 0;
+		while (!choosing2)
+		{
+			std::cout << "X :" << std::endl;
+			std::cin >> x;
+		    nrColumns = x;
+			
+			std::cout << "Y :" << std::endl;
+			std::cin >> y;
+			nrRows = y;
+			break;
+		}
+	}
+	if (textured)
+	{
+		system("CLS");
+		std::cout << "Choose Texture For Ball: " << std::endl;
+		std::cout << "1. Rusty Iron" << std::endl;
+		std::cout << "2. SciFi" << std::endl;
+		std::cout << "3. Gold" << std::endl;
+		std::cout << "4. Braided Carpet" << std::endl;
+		std::cout << "5. Plastic" << std::endl;
+		std::cout << "6. Painted Cement" << std::endl;
+		std::cout << "7. Limestone" << std::endl;
+		std::cout << "8. Bark" << std::endl;
+		std::cin >> textureChoice;
+	}
 
-
+	system("CLS");
+	std::cout << "Choose Skybox: " << std::endl;
+	std::cout << "1. Field" << std::endl;
+	std::cout << "2. RoofTop" << std::endl;
+	std::cout << "3. Containers" << std::endl;
+	std::cout << "4. Studio" << std::endl;
+	std::cout << "5. Seaside" << std::endl;
+	std::cin >> backGroundChoice;
 
 	std::shared_ptr<Core> core = Core::init();
 	Camera camera;
 
-	Shape sphere(true, false);
+	Shape sphereR(true, false);
 	Shape sphereNT(true, false);
-	Shape sphereSF(true, false);
+	
 	Shape cube(false, false);
 
 	Shape quad(false, true);
@@ -67,25 +115,105 @@ int main()
 	Shader preFilter("../shaders/prefilterShader.vs", "../shaders/prefilterShader.fs");
 	Shader brdf("../shaders/brdf.vs", "../shaders/brdf.fs");
 
+	std::string skybox;
+	switch (backGroundChoice)
+	{
+	case 1:
+		skybox = "../samples/textures/Ref.hdr";
+		break;
+	case 2:
+		skybox = "../samples/textures/skybox1.hdr";
+		break;
+	case 3:
+		skybox = "../samples/textures/containerRef.hdr";
+		break;
+	case 4:
+		skybox = "../samples/textures/StudioRef.hdr";
+		break;
+	case 5:
+		skybox = "../samples/textures/SeasideRef.hdr";
+		break;
+	}
+
 	sky.use();
 	sky.setInt("environmentMap", 0);
 
-	Texture skyBox("../samples/textures/Ref.hdr", true);
+	Texture skyBox(skybox, true);
 
-	//metalBall
-	Texture albedo("../samples/textures/basecolor.png", false);
-	Texture normal("../samples/textures/normal.png", false);
-	Texture metallic("../samples/textures/metallic.png", false);
-	Texture roughness("../samples/textures/roughness.png", false);
-	Texture ao("../samples/textures/grey.png", false);
+	std::string albedo;
+	std::string normal;
+	std::string metallic;
+	std::string roughness;
+	std::string ao;
 
-	//sci-fiBall
-	Texture Salbedo("../samples/textures/scialbedo.png", false);
-	Texture Snormal("../samples/textures/scinormal.png", false);
-	Texture Smetallic("../samples/textures/scimetallic.png", false);
-	Texture Sroughness("../samples/textures/sciroughness.png", false);
-	Texture Sao("../samples/textures/sciao.png", false);
+	switch (textureChoice)
+	{
+	case 1: //rustyiron
+		albedo = "../samples/textures/basecolor.png";
+		normal = "../samples/textures/normal.png";
+		metallic = "../samples/textures/metallic.png";
+		roughness = "../samples/textures/roughness.png";
+		ao = "../samples/textures/grey.png";
 
+		break;
+	case 2: //scifi
+		albedo = "../samples/textures/scialbedo.png";
+		normal = "../samples/textures/scinormal.png";
+		metallic = "../samples/textures/scimetallic.png";
+		roughness = "../samples/textures/sciroughness.png";
+		ao = "../samples/textures/sciao.png";
+		break;
+	case 3: //gold
+		albedo = "../samples/textures/Gbasecolor.png";
+		normal = "../samples/textures/Gnormal.png";
+		metallic = "../samples/textures/Gmetallic.png";
+		roughness = "../samples/textures/Groughness.png";
+		ao = "../samples/textures/Gao.png";
+		break;
+	case 4: //braided carpet
+		albedo = "../samples/textures/BCalbedo.png";
+		normal = "../samples/textures/BCnormal.png";
+		metallic = "../samples/textures/BCmetallic.png";
+		roughness = "../samples/textures/BCroughness.png";
+		ao = "../samples/textures/BCao.png";
+		break;
+	case 5: //plastic
+		albedo = "../samples/textures/Palbedo.png";
+		normal = "../samples/textures/Pnormal.png";
+		metallic = "../samples/textures/Pmetallic.png";
+		roughness = "../samples/textures/Proughness.png";
+		ao = "../samples/textures/Pao.png";
+		break;
+	case 6: //painted cement
+		albedo = "../samples/textures/PCalbedo.png";
+		normal = "../samples/textures/PCnormal.png";
+		metallic = "../samples/textures/PCmetallic.png";
+		roughness = "../samples/textures/PCroughness.png";
+		ao = "../samples/textures/PCao.png";
+		break;
+	case 7: //limestone
+		albedo = "../samples/textures/Lalbedo.png";
+		normal = "../samples/textures/Lnormal.png";
+		metallic = "../samples/textures/Lmetallic.png";
+		roughness = "../samples/textures/Lroughness.png";
+		ao = "../samples/textures/Lao.png";
+		break;
+	case 8: //bark
+		albedo = "../samples/textures/Balbedo.png";
+		normal = "../samples/textures/Bnormal.png";
+		metallic = "../samples/textures/Bmetallic.png";
+		roughness = "../samples/textures/Broughness.png";
+		ao = "../samples/textures/Bao.png";
+		break;
+	}
+
+
+    //texture creation
+	Texture Talbedo(albedo, false);
+	Texture Tnormal(normal, false);
+	Texture Tmetallic(metallic, false);
+	Texture Troughness(roughness, false);
+	Texture Tao(ao, false);
 	
 
 	Texture envCubeMap({1024,1024}, 0);
@@ -209,34 +337,26 @@ int main()
 	PBRNT.setVec3("albedo", { 0.5f, 0.0f,0.0f });
 	PBRNT.setFloat("ao", 1.0f);
 	
-	sphere.addTexture(albedo);
-	sphere.addTexture(normal);
+
+	//Textured
+	sphereR.addTexture(Talbedo);
+	sphereR.addTexture(Tnormal);
 	if (textured)
 	{
-		sphere.addTexture(metallic);
-		sphere.addTexture(roughness);
+		sphereR.addTexture(Tmetallic);
+		sphereR.addTexture(Troughness);
 	}
-	sphere.addTexture(ao);
-	sphere.addTexture(irCubeMap);
-	sphere.addTexture(preFilterCubeMap);
-	sphere.addTexture(brdfLUTTexture);
+	sphereR.addTexture(Tao);
+	sphereR.addTexture(irCubeMap);
+	sphereR.addTexture(preFilterCubeMap);
+	sphereR.addTexture(brdfLUTTexture);
 
-	sphereSF.addTexture(Salbedo);
-	sphereSF.addTexture(Snormal);
-	if (textured)
-	{
-		sphereSF.addTexture(Smetallic);
-		sphereSF.addTexture(Sroughness);
-	}
-	sphereSF.addTexture(Sao);
-	sphereSF.addTexture(irCubeMap);
-	sphereSF.addTexture(preFilterCubeMap);
-	sphereSF.addTexture(brdfLUTTexture);
-
+	//Untextured
 	sphereNT.addTexture(irCubeMap);
 	sphereNT.addTexture(preFilterCubeMap);
 	sphereNT.addTexture(brdfLUTTexture);
 	
+	//skybox
 	cube.addTexture(envCubeMap);
 
 	glm::vec3 lightPositions[] = {
@@ -251,16 +371,16 @@ int main()
 		glm::vec3(300.0f, 300.0f, 300.0f),
 		glm::vec3(300.0f, 300.0f, 300.0f)
 	};
-	int nrRows = 7;
-	int nrColumns = 7;
-	float spacing = 2.5;
-
 	bool playing = true;
 	bool cursorLock = true;
 	Uint64 NOW = SDL_GetPerformanceCounter();
 	Uint64 LAST = 0;
 	double deltaTime = 0;
-	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+	SDL_ShowCursor(0);
+	SDL_SetWindowGrab(core->getWindow(), SDL_TRUE);
+	SDL_WarpMouseInWindow(core->getWindow(), (WINDOW_WIDTH / 2), (WINDOW_HEIGHT / 2));
+
+
 	while (playing)
 	{
 		glm::mat4 proj = camera.GetProjMat();
@@ -296,9 +416,11 @@ int main()
 
 					PBR.setMat4("projection", proj);
 					PBR.setMat4("model", model);
+					
+					sphereR.bindTexture();
+					sphereR.render();
+					
 
-					sphere.bindTexture();
-					sphere.render();
 				}
 			}
 			for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
@@ -313,7 +435,7 @@ int main()
 				PBR.setMat4("model", model);
 				
 				
-				sphere.render(); //SHOWS LIGHT POSITIONS 
+				sphereR.render(); //SHOWS LIGHT POSITIONS 
 			}
 		}
 		if (!textured)

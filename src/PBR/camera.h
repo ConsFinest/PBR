@@ -19,8 +19,14 @@ class Camera
 	float Pitch;
 	float Zoom;
 	float MovementSpeed;
+
+	int mouseX;
+	int mouseY;
+	float angleX;
+	float angleY;
 	float lastX;
 	float lastY;
+	bool firstMouse;
 
 	void updateCameraVectors();
 
