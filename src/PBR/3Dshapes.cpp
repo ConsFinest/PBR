@@ -6,7 +6,7 @@ Shape::Shape(bool _sphere, bool _quad)
 	glGenBuffers(1, &VBO);
 	sphere = _sphere;
 	quad = _quad;
-	if (sphere)
+	if (sphere) //Creating Sphere
 	{
 		glGenBuffers(1, &EBO);
 		const unsigned int X_SEGMENTS = 64;
@@ -31,7 +31,7 @@ Shape::Shape(bool _sphere, bool _quad)
 		bool oddRow = false;
 		for (int y = 0; y < Y_SEGMENTS; ++y)
 		{
-			if (!oddRow) // even rows: y == 0, y == 2; and so on
+			if (!oddRow) 
 			{
 				for (int x = 0; x <= X_SEGMENTS; ++x)
 				{
@@ -98,7 +98,7 @@ void Shape::render()
 		glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
 		//unbindTexture();
 	}
-	if (!sphere && !quad)
+	if (!sphere && !quad) //Creating cube
 	{
 		float vertices[] = {
 			// back face
@@ -165,7 +165,7 @@ void Shape::render()
 		glBindVertexArray(0);
 		//unbindTexture();
 	}
-	if (!sphere && quad)
+	if (!sphere && quad) //Creating Quad
 	{
 	
 			

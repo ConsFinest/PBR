@@ -5,6 +5,9 @@
 #define WINDOW_HEIGHT 760
 
 
+//References https://learnopengl.com/PBR/Theory
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+
 #include <PBR/core.h>
 #include <PBR/resources.h>
 #include <PBR/shader.h>
@@ -113,7 +116,7 @@ int main()
 	Shader sky("../shaders/skyShader.vs", "../shaders/skyShader.fs");
 	Shader ir("../shaders/irShader.vs", "../shaders/irShader.fs");
 	Shader preFilter("../shaders/prefilterShader.vs", "../shaders/prefilterShader.fs");
-	Shader brdf("../shaders/brdf.vs", "../shaders/brdf.fs");
+	Shader brdf("../shaders/brdfShader.vs", "../shaders/brdfShader.fs");
 
 	std::string skybox;
 	switch (backGroundChoice)
@@ -521,5 +524,3 @@ int main()
 
 }
 
-
-//TO DO - no texture pbr

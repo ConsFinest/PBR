@@ -28,7 +28,7 @@ Camera::Camera()
 	Up = glm::normalize(Up);
 
 	Rotation = { 0,0,0 };
-	Position = { 0,0,0 };
+	Position = { 0,0,5 };
 
 	firstMouse = true;
 	mouseLock = true;
@@ -99,12 +99,12 @@ void Camera::movement(float _deltaTime, SDL_Window *_window)
 			case SDLK_l:
 				if (!mouseLock)
 				{
-					std::cout << "Mouse locked" << std::endl;
+					//std::cout << "Mouse locked" << std::endl;
 					mouseLock = true;
 				}
 				if (mouseLock)
 				{
-					std::cout << "Mouse unlocked" << std::endl;
+					//std::cout << "Mouse unlocked" << std::endl;
 					mouseLock = false;
 				}
 				break;
@@ -120,7 +120,7 @@ void Camera::movement(float _deltaTime, SDL_Window *_window)
 			{
 				mouseX = event.motion.xrel;
 				mouseY = event.motion.yrel;
-				std::cout << mouseX << " " << mouseY << std::endl;
+				//std::cout << mouseX << " " << mouseY << std::endl;
 			}
 			else
 			{
